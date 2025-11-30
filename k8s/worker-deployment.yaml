@@ -13,9 +13,34 @@ spec:
       labels:
         app: worker
     spec:
+      initContainers:
+      - name: git-clone
+        image: alpine/git
+        args:
+        - clone
+        - --single-branch
+        - --
+        - https://github.com/morozovsk/infotek.git
+        - /app
+        volumeMounts:
+        - name: app-source
+          mountPath: /app
+      - name: composer-install
+        image: composer:2
+        command: ["composer", "install", "--ignore-platform-reqs", "--no-interaction", "--no-plugins", "--no-scripts", "--prefer-dist"]
+        workingDir: /app
+        volumeMounts:
+        - name: app-source
+          mountPath: /app
+      - name: fix-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R 33:33 /app/runtime || mkdir -p /app/runtime && chown -R 33:33 /app/runtime"]
+        volumeMounts:
+        - name: app-source
+          mountPath: /app
       containers:
-      - image: infotek:latest
-        imagePullPolicy: Never
+      - image: morozovsk/infotek:latest
+        imagePullPolicy: Always
         name: worker
         command: ["php", "yii", "queue/listen"]
         env:
@@ -68,5 +93,4 @@ spec:
           mountPath: /app
       volumes:
       - name: app-source
-        hostPath:
-          path: /Users/morozovsk/www/infotek # NOTE: Adjust this path for actual K8s cluster
+        emptyDir: {}

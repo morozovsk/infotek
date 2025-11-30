@@ -13,6 +13,31 @@ spec:
       labels:
         app: app
     spec:
+      initContainers:
+      - name: git-clone
+        image: alpine/git
+        args:
+        - clone
+        - --single-branch
+        - --
+        - https://github.com/morozovsk/infotek.git
+        - /app
+        volumeMounts:
+        - name: app-source
+          mountPath: /app
+      - name: composer-install
+        image: composer:2
+        command: ["composer", "install", "--ignore-platform-reqs", "--no-interaction", "--no-plugins", "--no-scripts", "--prefer-dist"]
+        workingDir: /app
+        volumeMounts:
+        - name: app-source
+          mountPath: /app
+      - name: fix-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R 33:33 /app/runtime /app/web/assets || mkdir -p /app/runtime /app/web/assets && chown -R 33:33 /app/runtime /app/web/assets"]
+        volumeMounts:
+        - name: app-source
+          mountPath: /app
       containers:
       - image: nginx:latest
         name: nginx
@@ -24,8 +49,8 @@ spec:
         - name: nginx-config-volume
           mountPath: /etc/nginx/conf.d/default.conf
           subPath: default.conf
-      - image: infotek:latest
-        imagePullPolicy: Never
+      - image: morozovsk/infotek:latest
+        imagePullPolicy: Always
         name: app
         env:
         - name: MYSQL_HOST
@@ -77,8 +102,7 @@ spec:
           mountPath: /app
       volumes:
       - name: app-source
-        hostPath:
-          path: /Users/morozovsk/www/infotek # NOTE: Adjust this path for actual K8s cluster
+        emptyDir: {}
       - name: nginx-config-volume
         configMap:
           name: nginx-config

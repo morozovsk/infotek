@@ -57,6 +57,15 @@ $config = [
             'driver' => \yii\queue\amqp_interop\Queue::ENQUEUE_AMQP_LIB,
             'dsn' => 'amqp://' . (getenv('RABBITMQ_DEFAULT_USER') ?: 'guest') . ':' . (getenv('RABBITMQ_DEFAULT_PASS') ?: 'guest') . '@' . (getenv('RABBITMQ_HOST') ?: 'rabbitmq') . ':' . (getenv('RABBITMQ_PORT') ?: '5672'),
         ],
+        'i18n' => [
+            'translations' => [
+                'yii/bootstrap5' => [
+                    'class' => 'yii\i18n\PhpMessageSource',
+                    'basePath' => '@vendor/yiisoft/yii2-bootstrap5/messages',
+                    'sourceLanguage' => 'en-US',
+                ],
+            ],
+        ],
     ],
     'params' => $params,
 ];
